@@ -1,22 +1,55 @@
 # System Architecture
 
-This project is a timezone-aware email orchestration engine designed for global email marketing automation.
+## Overview
 
-## Workflow Overview
+This project is a production-grade timezone-aware email orchestration engine built using n8n and JavaScript for global-scale marketing automation.
 
-1. Schedule trigger initiates execution.
-2. Recipient data is fetched from spreadsheet.
-3. JavaScript nodes process timezone logic.
-4. Content sheet is merged with recipient data.
-5. Send eligibility is checked.
-6. Time filter validates local delivery time.
-7. Email is dispatched.
-8. Delivery state is appended back to spreadsheet.
+The workflow ensures recipients receive emails during their local business hours while preventing duplicate sends and maintaining delivery state tracking.
 
-## Core Objectives
+---
 
-- Timezone-aware delivery
+## Workflow Pipeline
+
+1. **Schedule Trigger**
+   - Initiates automated execution.
+
+2. **Recipient Data Retrieval**
+   - Fetches recipient records from spreadsheet.
+
+3. **Timezone Processing**
+   - Converts recipient timezone and local delivery timing.
+
+4. **Content Sheet Merge**
+   - Combines email content with recipient data.
+
+5. **Eligibility Validation**
+   - Prevents duplicate email delivery.
+
+6. **Delivery Window Filtering**
+   - Ensures emails are sent during local business hours.
+
+7. **Email Dispatch**
+   - Sends campaign emails.
+
+8. **Delivery State Update**
+   - Appends execution state back to spreadsheet.
+
+---
+
+## Core Features
+
+- Global timezone-aware email delivery
 - Idempotent email execution
-- Global campaign orchestration
-- Automated workflow execution
-- Spreadsheet-driven campaign management
+- Spreadsheet-driven orchestration
+- Automated workflow scheduling
+- Delivery tracking and state management
+- Modular JavaScript processing layer
+
+---
+
+## Tech Stack
+
+- **n8n**
+- **JavaScript**
+- **Spreadsheet Automation**
+- **SMTP Email Delivery**
