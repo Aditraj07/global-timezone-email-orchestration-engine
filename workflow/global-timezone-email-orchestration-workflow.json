@@ -1,0 +1,752 @@
+{
+
+  "nodes": [
+
+    {
+
+      "parameters": {
+
+        "jsCode": "const countries = Object.keys(items[0].json);\nconst output = [];\n\nitems.forEach(row => {\n  countries.forEach(country => {\n    const email = row.json[country];\n    if (email && email.includes('@')) {\n      output.push({\n        json: {\n          Email: email,\n          Country: country,\n          Status: '',\n          Sent_At: ''\n        }\n      });\n    }\n  });\n});\nreturn output;"
+
+      },
+
+      "type": "n8n-nodes-base.code",
+
+      "typeVersion": 2,
+
+      "position": [
+
+        -304,
+
+        96
+
+      ],
+
+      "id": "00e36365-3dc1-4b52-bb35-d98ecbac045f",
+
+      "name": "Code in JavaScript3",
+
+      "alwaysOutputData": true
+
+    },
+
+    {
+
+      "parameters": {
+
+        "jsCode": "// ✅ COUNTRY → TIMEZONE MAP\nconst countryTimezoneMap = {\n  \"India\": \"Asia/Kolkata\",\n  \"United States\": \"America/New_York\",\n  \"USA\": \"America/New_York\",\n  \"Canada\": \"America/Toronto\",\n  \"United Kingdom\": \"Europe/London\",\n  \"UK\": \"Europe/London\",\n  \"Germany\": \"Europe/Berlin\",\n  \"France\": \"Europe/Paris\",\n  \"Italy\": \"Europe/Rome\",\n  \"Spain\": \"Europe/Madrid\",\n  \"Netherlands\": \"Europe/Amsterdam\",\n  \"Belgium\": \"Europe/Brussels\",\n  \"Switzerland\": \"Europe/Zurich\",\n  \"Austria\": \"Europe/Vienna\",\n  \"Sweden\": \"Europe/Stockholm\",\n  \"Norway\": \"Europe/Oslo\",\n  \"Denmark\": \"Europe/Copenhagen\",\n  \"Finland\": \"Europe/Helsinki\",\n  \"Poland\": \"Europe/Warsaw\",\n  \"Czech Republic\": \"Europe/Prague\",\n  \"Ireland\": \"Europe/Dublin\",\n  \"Portugal\": \"Europe/Lisbon\",\n  \"Greece\": \"Europe/Athens\",\n  \"Russia\": \"Europe/Moscow\",\n  \"China\": \"Asia/Shanghai\",\n  \"Japan\": \"Asia/Tokyo\",\n  \"South Korea\": \"Asia/Seoul\",\n  \"Singapore\": \"Asia/Singapore\",\n  \"Malaysia\": \"Asia/Kuala_Lumpur\",\n  \"Thailand\": \"Asia/Bangkok\",\n  \"Indonesia\": \"Asia/Jakarta\",\n  \"Philippines\": \"Asia/Manila\",\n  \"Vietnam\": \"Asia/Ho_Chi_Minh\",\n  \"UAE\": \"Asia/Dubai\",\n  \"United Arab Emirates\": \"Asia/Dubai\",\n  \"Saudi Arabia\": \"Asia/Riyadh\",\n  \"Qatar\": \"Asia/Qatar\",\n  \"Kuwait\": \"Asia/Kuwait\",\n  \"Oman\": \"Asia/Muscat\",\n  \"Israel\": \"Asia/Jerusalem\",\n  \"Turkey\": \"Europe/Istanbul\",\n  \"Nepal\": \"Asia/Kathmandu\",\n  \"Sri Lanka\": \"Asia/Colombo\",\n  \"Shri Lanka\": \"Asia/Colombo\",\n  \"Australia\": \"Australia/Sydney\",\n  \"New Zealand\": \"Pacific/Auckland\",\n  \"Papua New Guinea\": \"Pacific/Port_Moresby\",\n  \"Fiji\": \"Pacific/Fiji\",\n  \"Vanuatu\": \"Pacific/Efate\",\n  \"Tonga\": \"Pacific/Tongatapu\",\n  \"South Africa\": \"Africa/Johannesburg\",\n  \"Egypt\": \"Africa/Cairo\",\n  \"Nigeria\": \"Africa/Lagos\",\n  \"Kenya\": \"Africa/Nairobi\",\n  \"Rwanda\": \"Africa/Kigali\",\n  \"Tanzania\": \"Africa/Dar_es_Salaam\",\n  \"Ethiopia\": \"Africa/Addis_Ababa\",\n  \"Botswana\": \"Africa/Gaborone\",\n  \"Brazil\": \"America/Sao_Paulo\",\n  \"Mexico\": \"America/Mexico_City\",\n  \"Argentina\": \"America/Argentina/Buenos_Aires\",\n  \"Chile\": \"America/Santiago\",\n  \"Colombia\": \"America/Bogota\"\n};\n\n// ✅ COUNTRY → LANGUAGE MAP (business email recommended)\nconst countryLanguageMap = {\n  \"India\": \"English\",\n  \"United States\": \"English\",\n  \"USA\": \"English\",\n  \"Canada\": \"English\",\n  \"United Kingdom\": \"English\",\n  \"UK\": \"English\",\n  \"Ireland\": \"English\",\n  \"Australia\": \"English\",\n  \"New Zealand\": \"English\",\n  \"Singapore\": \"English\",\n  \"Philippines\": \"English\",\n  \"Kenya\": \"English\",\n  \"Nigeria\": \"English\",\n  \"South Africa\": \"English\",\n  \"Egypt\": \"English\",\n\n  \"Germany\": \"German\",\n  \"France\": \"French\",\n  \"Italy\": \"Italian\",\n  \"Spain\": \"Spanish\",\n  \"Austria\": \"German\",\n\n  \"China\": \"Chinese (Simplified)\",\n  \"Japan\": \"Japanese\",\n  \"South Korea\": \"Korean\",\n  \"Thailand\": \"Thai\",\n  \"Indonesia\": \"Indonesian\",\n  \"Vietnam\": \"Vietnamese\",\n\n  \"Saudi Arabia\": \"Arabic\",\n  \"Kuwait\": \"Arabic\",\n  \"Oman\": \"Arabic\",\n  \"Qatar\": \"English\",\n  \"UAE\": \"English\",\n  \"United Arab Emirates\": \"English\",\n  \"Israel\": \"English\",\n  \"Turkey\": \"English\",\n\n  \"Brazil\": \"English\",\n  \"Mexico\": \"English\",\n  \"Argentina\": \"English\",\n  \"Chile\": \"English\",\n  \"Colombia\": \"English\"\n};\n\nfunction normalizeCountry(name) {\n  return name ? name.toString().trim() : \"\";\n}\n\nfunction getSendAtLocal(tz, targetHour = 09, targetMinute = 30) {\n  const now = new Date();\n\n  // Current date in that timezone\n  const parts = new Intl.DateTimeFormat(\"en-CA\", {\n    timeZone: tz,\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n  }).formatToParts(now);\n\n  const obj = {};\n  for (const p of parts) obj[p.type] = p.value;\n\n  const yyyy = obj.year;\n  const mm = obj.month;\n  const dd = obj.day;\n\n return `${yyyy}-${mm}-${dd}T09:30:00`;\n\n}\n\nreturn items.map((item) => {\n  const country = normalizeCountry(item.json.Country);\n\n  item.json.timezone = item.json.timezone || countryTimezoneMap[country] || \"UTC\";\n  item.json.Language = item.json.Language || countryLanguageMap[country] || \"English\";\n  item.json.Campaign_ID = item.json.Campaign_ID || \"GLOBAL_CAMPAIGN\";\n\n  // ✅ 9.30 AM local time (not UTC)\n  item.json.send_at = getSendAtLocal(item.json.timezone, 09,30);\n\n  return item;\n});"
+
+      },
+
+      "type": "n8n-nodes-base.code",
+
+      "typeVersion": 2,
+
+      "position": [
+
+        160,
+
+        96
+
+      ],
+
+      "id": "a8630be3-9831-41e9-b0ea-e47ab595decf",
+
+      "name": "Code in JavaScript4",
+
+      "alwaysOutputData": true
+
+    },
+
+    {
+
+      "parameters": {
+
+        "resource": "worksheet",
+
+        "operation": "append",
+
+        "workbook": {
+
+          "__rl": true,
+
+          "value": "WORKBOOK_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "send_input_emails",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "worksheet": {
+
+          "__rl": true,
+
+          "value": "WORKSHEET_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "data-final",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "fieldsUi": {
+
+          "values": [
+
+            {
+
+              "column": "Email ",
+
+              "fieldValue": "={{ $json.Email }}"
+
+            },
+
+            {
+
+              "column": "Country",
+
+              "fieldValue": "={{ $json.Country }}"
+
+            },
+
+            {
+
+              "column": "Status",
+
+              "fieldValue": "={{ $json.Status }}"
+
+            },
+
+            {
+
+              "column": "Sent_At",
+
+              "fieldValue": "={{ $json.send_at }}"
+
+            },
+
+            {
+
+              "column": "timezone",
+
+              "fieldValue": "={{ $json.timezone }}"
+
+            },
+
+            {
+
+              "column": "Campaign_ID",
+
+              "fieldValue": "={{ $json.Campaign_ID }}"
+
+            },
+
+            {
+
+              "column": "Language",
+
+              "fieldValue": "={{ $json.Language }}"
+
+            }
+
+          ]
+
+        },
+
+        "options": {}
+
+      },
+
+      "type": "n8n-nodes-base.microsoftExcel",
+
+      "typeVersion": 2.2,
+
+      "position": [
+
+        -800,
+
+        336
+
+      ],
+
+      "id": "d19917dd-6493-44b6-9fcf-9e82cda6cd9c",
+
+      "name": "Append DATA FINAL1",
+
+      "alwaysOutputData": true,
+
+      "credentials": {
+
+        "microsoftExcelOAuth2Api": {
+
+          "id": "REDACTED_CREDENTIAL_ID",
+
+          "name": "Excel Credential"
+
+        }
+
+      }
+
+    },
+
+    {
+
+      "parameters": {
+
+        "resource": "worksheet",
+
+        "operation": "append",
+
+        "workbook": {
+
+          "__rl": true,
+
+          "value": "WORKBOOK_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "send_input_emails",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "worksheet": {
+
+          "__rl": true,
+
+          "value": "WORKSHEET_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "copy-data",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "fieldsUi": {
+
+          "values": [
+
+            {
+
+              "column": "Email",
+
+              "fieldValue": "={{ $json.Email }}"
+
+            },
+
+            {
+
+              "column": "Country",
+
+              "fieldValue": "={{ $json.Country }}"
+
+            }
+
+          ]
+
+        },
+
+        "options": {}
+
+      },
+
+      "type": "n8n-nodes-base.microsoftExcel",
+
+      "typeVersion": 2.2,
+
+      "position": [
+
+        -80,
+
+        96
+
+      ],
+
+      "id": "f933edd1-53c4-454a-a994-aff56a647c99",
+
+      "name": "Append data to sheet1",
+
+      "alwaysOutputData": true,
+
+      "credentials": {
+
+        "microsoftExcelOAuth2Api": {
+
+          "id": "REDACTED_CREDENTIAL_ID",
+
+          "name": "Excel Credential"
+
+        }
+
+      }
+
+    },
+
+    {
+
+      "parameters": {
+
+        "resource": "worksheet",
+
+        "operation": "readRows",
+
+        "workbook": {
+
+          "__rl": true,
+
+          "value": "WORKBOOK_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "send_input_emails",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "worksheet": {
+
+          "__rl": true,
+
+          "value": "WORKSHEET_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "Sheet1",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "options": {}
+
+      },
+
+      "type": "n8n-nodes-base.microsoftExcel",
+
+      "typeVersion": 2.2,
+
+      "position": [
+
+        -544,
+
+        96
+
+      ],
+
+      "id": "8e1aa985-acd6-45f6-b3b1-6d58ef9998d5",
+
+      "name": "Get rows from sheet1",
+
+      "alwaysOutputData": true,
+
+      "credentials": {
+
+        "microsoftExcelOAuth2Api": {
+
+          "id": "REDACTED_CREDENTIAL_ID",
+
+          "name": "Excel Credential"
+
+        }
+
+      }
+
+    },
+
+    {
+
+      "parameters": {
+
+        "resource": "worksheet",
+
+        "operation": "readRows",
+
+        "workbook": {
+
+          "__rl": true,
+
+          "value": "WORKBOOK_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "send_input_emails",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "worksheet": {
+
+          "__rl": true,
+
+          "value": "WORKSHEET_ID_REDACTED",
+
+          "mode": "list",
+
+          "cachedResultName": "content-sheet-img",
+
+          "cachedResultUrl": "REDACTED_INTERNAL_RESOURCE"
+
+        },
+
+        "options": {}
+
+      },
+
+      "type": "n8n-nodes-base.microsoftExcel",
+
+      "typeVersion": 2.2,
+
+      "position": [
+
+        -448,
+
+        448
+
+      ],
+
+      "id": "0f305697-66b0-4b43-a448-c5d4dd583ca8",
+
+      "name": "Get rows from content-sheet",
+
+      "alwaysOutputData": true,
+
+      "executeOnce": true,
+
+      "credentials": {
+
+        "microsoftExcelOAuth2Api": {
+
+          "id": "REDACTED_CREDENTIAL_ID",
+
+          "name": "Excel Credential"
+
+        }
+
+      }
+
+    },
+
+    {
+
+      "parameters": {
+
+        "mode": "combine",
+
+        "fieldsToMatchString": "Campaign_ID",
+
+        "options": {}
+
+      },
+
+      "type": "n8n-nodes-base.merge",
+
+      "typeVersion": 3.2,
+
+      "position": [
+
+        -80,
+
+        352
+
+      ],
+
+      "id": "dcc291f0-44d8-4a4d-81d5-5e866637a70d",
+
+      "name": "Merge",
+
+      "alwaysOutputData": true
+
+    },
+
+    {
+
+      "parameters": {
+
+        "fromEmail": "=marketing@example.com",
+
+        "toEmail": "={{ $json['Email '] }}",
+
+        "subject": "={{ $json.Subject }}",
+
+        "html": "={{ $json.Email_Body }}",
+
+        "options": {
+
+          "appendAttribution": false
+
+        }
+
+      },
+
+      "type": "n8n-nodes-base.emailSend",
+
+      "typeVersion": 2.1,
+
+      "position": [
+
+        160,
+
+        352
+
+      ],
+
+      "id": "ef1c2bae-fa3d-46fe-b15d-d4bc7b4603a9",
+
+      "name": "Send email",
+
+      "webhookId": "dc35ced9-72f6-4a93-8299-40c619cd9496",
+
+      "alwaysOutputData": true,
+
+      "credentials": {
+
+        "smtp": {
+
+          "id": "REDACTED_CREDENTIAL_ID",
+
+          "name": "SMTP Credential"
+
+        }
+
+      },
+
+      "onError": "continueRegularOutput"
+
+    },
+
+    {
+
+      "parameters": {},
+
+      "type": "n8n-nodes-base.manualTrigger",
+
+      "typeVersion": 1,
+
+      "position": [
+
+        -800,
+
+        96
+
+      ],
+
+      "id": "6bfbc209-9b72-49c0-84d4-01efd283133b",
+
+      "name": "When clicking ‘Execute workflow’"
+
+    }
+
+  ],
+
+  "connections": {
+
+    "Code in JavaScript3": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Append data to sheet1",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Code in JavaScript4": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Append DATA FINAL1",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Append DATA FINAL1": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Merge",
+
+            "type": "main",
+
+            "index": 0
+
+          },
+
+          {
+
+            "node": "Get rows from content-sheet",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Append data to sheet1": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Code in JavaScript4",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Get rows from sheet1": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Code in JavaScript3",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Get rows from content-sheet": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Merge",
+
+            "type": "main",
+
+            "index": 1
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "Merge": {
+
+      "main": [
+
+        [
+
+          {
+
+            "node": "Send email",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    },
+
+    "When clicking ‘Execute workflow’": {
+
+      "main": [
+
+        [
+
+          {
+ 
+            "node": "Get rows from sheet1",
+
+            "type": "main",
+
+            "index": 0
+
+          }
+
+        ]
+
+      ]
+
+    }
+
+  },
+
+  "pinData": {},
+
+  "meta": {
+
+    "templateCredsSetupCompleted": true,
+
+    "instanceId": "INSTANCE_ID_REDACTED"
+
+  }
+
+}
+ 
